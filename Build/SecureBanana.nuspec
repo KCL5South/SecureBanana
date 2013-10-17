@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>SecureBanana</id>
+        <version>1.0.0</version>
+        <authors>Squadron 5 South</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>My package description.</description>
+    </metadata>
+    <files>
+        <file src="..\SecureBanana.Console\bin\Release\Microsoft.Practices.ServiceLocation.dll" target="tools\Microsoft.Practices.ServiceLocation.dll" />
+        <file src="..\SecureBanana.Console\bin\Release\Microsoft.Practices.Unity.dll" target="tools\Microsoft.Practices.Unity.dll" />
+        <file src="..\SecureBanana.Console\bin\Release\NDesk.Options.dll" target="tools\NDesk.Options.dll" />
+        <file src="..\SecureBanana.Console\bin\Release\SecureBanana.exe" target="tools\SecureBanana.exe" />
+    </files>
+</package>

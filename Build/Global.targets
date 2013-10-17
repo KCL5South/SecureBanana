@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+	<PropertyGroup>
+		<NUnitExecutable Condition=" '$(NUnitExecutable)' == '' ">$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\packages\NUnit.Runners\tools\nunit-console-x86.exe))</NUnitExecutable>
+		<SpecFlowExecutable Condition=" '$(SpecFlowExecutable)' == '' ">$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\packages\SpecFlow\tools\specflow.exe))</SpecFlowExecutable>
+		<SpecFlowTarget>$([System.IO.Path]::GetFullPath($(MSBuildProjectDirectory)\..\packages\SpecFlow\tools\TechTalk.SpecFlow.targets))</SpecFlowTarget>	
+		<RunTests Condition=" '$(RunTests)' == '' ">false</RunTests>
+		<ForceGeneration>true</ForceGeneration>
+		<BuildServerMode>true</BuildServerMode>
+		<VerboseOutput>true</VerboseOutput>
+		<ShowTrace>true</ShowTrace>
+	</PropertyGroup>	
+
+	<Target Name="RunUnitTests" Condition=" '$(RunTests)' == 'true' ">
+		<Exec 	Command="&quot;$(NUnitExecutable)&quot; &quot;$(MSBuildProjectDirectory)\bin\$(Configuration)\$(AssemblyName).dll&quot; /nologo /include:$(NonFeatureFilter) /xml:$(AssemblyName)_TestResults.xml" 
+				WorkingDirectory="$(MSBuildProjectDirectory)\bin\$(Configuration)"
+				Condition=" '$(NonFeatureFilter)' != '' " />  
+		<Exec 	Command="&quot;$(NUnitExecutable)&quot; &quot;$(MSBuildProjectDirectory)\bin\$(Configuration)\$(AssemblyName).dll&quot; /nologo /xml:$(AssemblyName)_TestResults.xml" 
+				WorkingDirectory="$(MSBuildProjectDirectory)\bin\$(Configuration)"
+				Condition=" '$(NonFeatureFilter)' == '' " />  
+	</Target>
+
+	<Target Name="RunFeatureTests" Condition=" '$(RunTests)' == 'true' ">
+		<Message Text="Running Features..." />
+		<Exec 	Command="&quot;$(NUnitExecutable)&quot; &quot;$(MSBuildProjectDirectory)\bin\$(Configuration)\$(AssemblyName).dll&quot; /exclude:$(NonFeatureFilter) /nologo /labels /out:FeatureTests.txt /xml:FeatureTests.xml" 
+				WorkingDirectory="$(MSBuildProjectDirectory)\bin\$(Configuration)"
+				Condition=" '$(NonFeatureFilter)' != '' " />
+		<Exec 	Command="&quot;$(NUnitExecutable)&quot; &quot;$(MSBuildProjectDirectory)\bin\$(Configuration)\$(AssemblyName).dll&quot; /nologo /labels /out:FeatureTests.txt /xml:FeatureTests.xml" 
+				WorkingDirectory="$(MSBuildProjectDirectory)\bin\$(Configuration)"
+				Condition=" '$(NonFeatureFilter)' == '' " />  
+		<Message Text="Generating Execution Report" />
+		<MakeDir Directories="$(MSBuildProjectDirectory)\bin\$(Configuration)\FeatureReport" />
+		<Exec 	Command="&quot;$(SpecFlowExecutable)&quot; nunitexecutionreport &quot;$(MSBuildProjectDirectory)\$(MSBuildProjectFile)&quot; /out:FeatureReport\FeatureTests.html /testOutput:FeatureTests.txt /xmlTestResult:FeatureTests.xml"
+				WorkingDirectory="$(MSBuildProjectDirectory)\bin\$(Configuration)" />
+	</Target>
+</Project>

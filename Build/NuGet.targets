@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup Condition=" '$(PackageFile)' == '' ">
+		<PackageFile>$(MSBuildThisFileDirectory)packages.config</PackageFile>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(PackageOutputDirectory)' == '' ">
+		<PackageOutputDirectory>$([System.IO.Path]::GetFullPath("$(MSBuildThisFileDirectory)..\packages"))</PackageOutputDirectory>
+	</PropertyGroup>
+
+	<PropertyGroup> 
+		<BuildDependsOn>
+			_ResolveDependencyPackages;
+			$(BuildDependsOn)
+		</BuildDependsOn>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<CleanDependsOn>
+			$(CleanDependsOn);
+			<!--_CleanDependencyPackages-->
+		</CleanDependsOn>
+	</PropertyGroup>
+
+	<Target Name="_ResolveDependencyPackages">
+		<!--
+        Take advantage of MsBuild's build dependency tracking to make sure that we only ever download nuget.exe once.
+        This effectively acts as a lock that makes sure that the download operation will only happen once and all
+        parallel builds will have to wait for it to complete.
+        -->
+		<MSBuild	Targets="ResolveDependencyPackages" 
+					Projects="$(MSBuildThisFileFullPath)" 
+					Properties="PackageFile=$(PackageFile);PackageOutputDirectory=$(PackageOutputDirectory)" 
+					BuildInParallel="false"
+					UnloadProjectsOnCompletion="true" />
+	</Target>
+
+	<Target Name="_CleanDependencyPackages">
+		<!--
+        Take advantage of MsBuild's build dependency tracking to make sure that we only ever download nuget.exe once.
+        This effectively acts as a lock that makes sure that the download operation will only happen once and all
+        parallel builds will have to wait for it to complete.
+        -->
+		<MSBuild	Targets="CleanDependencyPackages"
+					Projects="$(MSBuildThisFileFullPath)" 
+					Properties="PackageFile=$(PackageFile);PackageOutputDirectory=$(PackageOutputDirectory)" 
+					BuildInParallel="false"
+					UnloadProjectsOnCompletion="true" />
+	</Target>
+
+	<Target Name="ResolveDependencyPackages">
+		<MakeDir Directories="$(PackageOutputDirectory)" Condition="!Exists($(PackageOutputDirectory))"/>
+		<Exec 	Command="nuget install &quot;$(PackageFile)&quot; -OutputDirectory &quot;$(PackageOutputDirectory)&quot; -NoCache -NonInteractive -Verbosity detailed -ExcludeVersion"
+				Condition="Exists($(PackageOutputDirectory))" />
+	</Target>
+
+	<Target Name="CleanDependencyPackages">
+		<ItemGroup>
+			<_filesToDelete Include="$(PackageOutputDirectory)**\*.*" />
+		</ItemGroup>
+		<Delete Files="@(_filesToDelete)" />
+		<RemoveDir Directories="$(PackageOutputDirectory)" Condition="Exists($(PackageOutputDirectory))"/>
+	</Target>
+</Project>

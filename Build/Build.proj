@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+	
+	<PropertyGroup>
+		<AssemblyMajorVersion Condition=" $(AssemblyMajorVersion) == '' ">1</AssemblyMajorVersion>
+        <AssemblyMinorVersion Condition=" $(AssemblyMinorVersion) == '' ">0</AssemblyMinorVersion>
+        <AssemblyBuildNumber Condition=" $(AssemblyBuildNumber) == '' " >0</AssemblyBuildNumber>
+        <AssemblyRevision Condition=" $(AssemblyRevision) == '' " >0</AssemblyRevision>
+        <AssemblyFullVersion>$(AssemblyMajorVersion).$(AssemblyMinorVersion).$(AssemblyBuildNumber).$(AssemblyRevision)</AssemblyFullVersion>
+        <NuGetFeed>https://www.ikclife.com/KCLNugetFeed/</NuGetFeed>
+        <NuGetAPIKey></NuGetAPIKey>
+   	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectsToBuild Include="..\SecureBanana.Console\SecureBanana.Console.csproj"/>
+		<ProjectsToBuild Include="..\SecureBanana.Console.Test\SecureBanana.Console.Test.csproj"/>
+		<ProjectsToBuild Include="..\SecureBanana.Console.Features\SecureBanana.Console.Features.csproj"/>
+
+		<NuGetSpec Include="*.nuspec"/>
+	</ItemGroup>
+
+	<Target Name="ResolveDependencies" Condition="Exists($(PackageOutputDirectory))">
+		<RemoveDir Directories="$(MSBuildThisFileDirectory)..\packages" />
+		<CallTarget Targets="ResolveDependencyPackages" />
+	</Target>
+
+	<Target Name="Build" DependsOnTargets="ResolveDependencies">
+		<MSBuild	Projects="@(ProjectsToBuild)" Targets="Build" Properties="Configuration=Release;RunTests=true" BuildInParallel="true"
+					UnloadProjectsOnCompletion="true" />
+	</Target>	
+
+	<Target Name="Clean" DependsOnTargets="ResolveDependencies">
+		<MSBuild 	Projects="@(ProjectsToBuild)" Targets="Clean" Properties="Configuration=Release;RunTests=true" BuildInParallel="true"
+					UnloadProjectsOnCompletion="true" />
+	</Target>
+
+	<Target Name="ReBuild" DependsOnTargets="ResolveDependencies">
+		<MSBuild 	Projects="@(ProjectsToBuild)" Targets="ReBuild" Properties="Configuration=Release;RunTests=true" BuildInParallel="true"
+					UnloadProjectsOnCompletion="true" />
+	</Target>
+
+	<Target Name="NuGet">
+		<CallTarget Targets="NuGet_Pack" />
+		<CallTarget Targets="NuGet_Publish" />
+		<CallTarget Targets="NuGet_Clean" />
+	</Target>
+
+	<Target Name="NuGet_Pack">
+		<Message Text="Packing %(NuGetSpec.FullPath)"/>
+		<Exec Command="nuget pack &quot;%(NuGetSpec.FullPath)&quot; -Version $(AssemblyFullVersion)" 
+			WorkingDirectory="%(NuGetSpec.RootDir)%(NuGetSpec.Directory)"
+			IgnoreStandardErrorWarningFormat="true" />
+	</Target>
+	
+	<Target Name="NuGet_Publish">
+		<ItemGroup>
+			<NuGetPackage Include="*.nupkg"/>
+		</ItemGroup>
+		<Message Text="Publishing %(NuGetPackage.FullPath)"/>
+		<Exec Command="nuget push &quot;%(NuGetPackage.FullPath)&quot; -s $(NuGetFeed) $(NuGetAPIKey)" 
+			WorkingDirectory="%(NuGetPackage.RootDir)%(NuGetPackage.Directory)"/>
+	</Target>
+
+	<Target Name="NuGet_Clean">
+		<ItemGroup>
+			<NuGetPackage Include="*.nupkg"/>
+		</ItemGroup>
+		<Delete Files="@(NuGetPackage)"/>
+	</Target>
+
+	<Import Project="$(MSBuildThisFileDirectory)NuGet.targets" />
+</Project>
